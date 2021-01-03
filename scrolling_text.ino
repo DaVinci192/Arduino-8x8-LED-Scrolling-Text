@@ -1,118 +1,69 @@
-//www.elegoo.com
-//2016.12.9
-
 #include "LedControl.h"
 #include "string_convert.h"
 
+// initializing the LED matrix object
 LedControl lc=LedControl(12,10,11,1);
 
+// different delay times can be used to adjust scroll speed of text
 unsigned long delaytime1 = 500;
 unsigned long delaytime2 = 50;
 unsigned long delaytime3 = 250;
 
 const int LIGHT_INTENSITY = 1;
+
 const int DISPLAY_WIDTH = 8;
 
-const int MAX_CHARS = 50;
+const int MAX_CHARS = 50; // This is an arbitrary value, it may be changed.
 const int MAX_CHAR_LENGTH = 6;
 const int MAX_DISPLAY_LENGTH = MAX_CHARS*MAX_CHAR_LENGTH;
-
-byte b[12] = {B01111110,B10001000,B10001000,B10001000,B01111110,B00000000,B01111110,B10001000,B10001000,B10001000,B01111110,B00000000};
 
 char chars[MAX_CHARS];
 byte data[MAX_DISPLAY_LENGTH];
 int stringSize = 0;
-String message = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+String message = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // An arbitrary message
 
 void setup() {
   lc.shutdown(0,false); // wakeup call
   lc.setIntensity(0,LIGHT_INTENSITY); // set light intensity
   lc.clearDisplay(0); // clearing the display
-  Serial.begin(9600);
 
+  // setting the "data" array to a default value
   for (int displayCol = 0; displayCol < MAX_DISPLAY_LENGTH; displayCol++)
   {
-    data[displayCol] = B00010000;
+    data[displayCol] = B00000000;
   }
-  
+
+  // populating the "data" array used for displaying "message"
   convert_string_to_byte(message, data, chars, stringSize);
-  Serial.print("\n");
-
-  for (int i = 0; i < 8; i++)
-  {
-    Serial.print(data[i], BIN);
-    Serial.print("\n");
-  }
 }
-
-/* "Slider goes over array"
- * - first iteration: print values from indices 0 to 7
- * - second interation: print values from indices 1 to 8
- * - etc
- * - to wrap values, print from index n to the end of the array, then print the rest from the beginning such that a total of 8 values are printed
- * - one value continuously goes from 0 to 7 for the display. the other values keeps going up to the array max
- */
 
 void displayWithScroll(const byte displayData[], int arrSize)
 {
-
-//  int width = min(arrSize, DISPLAY_WIDTH);
-//  int whitespace = DISPLAY_WIDTH + (arrSize % DISPLAY_WIDTH);
-//  
-//  for (int displayCol = 0; displayCol < width; displayCol++)
-//  {
-//    lc.setRow(0, displayCol, displayData[displayCol]);
-////    Serial.print(displayData[displayCol]);
-////    Serial.print("\n");
-//  }
-//  delay(delaytime1);
-
-//  for (int shift = 0; shift < arrSize; shift++)
-//  {
-//    for (int displayCol = 0; displayCol < DISPLAY_WIDTH; displayCol++)
-//    {
-//      int letterIndex = displayCol + shift;
-//
-//      if (letterIndex > (arrSize - 1))
-//      {
-//        shift = 0;
-//        letterIndex = displayCol;
-//      }
-//      
-//      lc.setRow(0, displayCol, displayData[displayCol + shift]);
-//    }
-//    delay(delaytime1);  
-//  }
-
+  // for loop scrolls text by incrementing the display window by 1 (ie. first 0-7, second, 1-8)
   for (int shift = 0; shift < arrSize; shift++)
   {
     int colsDisplayed = 0;
+    
+    // out of bounds indexing is prevented by the second condition in the for loop
     for (int displayCol = 0; displayCol < DISPLAY_WIDTH && (displayCol+shift < arrSize); displayCol++)
     {
       lc.setRow(0, displayCol, displayData[displayCol + shift]);
       colsDisplayed++;
     }
+    
     int wrapCol = 0;
+
+    // if not all 8 columns were displayed, then function returns to the start of the array, creating the "wrap" effect
     for (int displayCol = colsDisplayed; displayCol < DISPLAY_WIDTH; displayCol++)
     {
       lc.setRow(0, displayCol, displayData[wrapCol]);
       wrapCol++;
     }
-    delay(delaytime3);
+    delay(delaytime3); // custom delay, can be changed to increase/decrease scroll speed of text
   }
 }
 
-void loop() {
-  byte a[10]={B01111110, B00010001, B00010001, B01111110, B00000000, B01111111, B01001001, B01001001, B00110110, B00000000};
-  
-//  lc.setRow(0,0,a[0]);
-//  lc.setRow(0,1,a[1]);
-//  lc.setRow(0,2,a[2]);
-//  lc.setRow(0,3,a[3]);
-//  lc.setRow(0,4,a[4]);
-//  delay(delaytime1);
-//    displayWithScroll(a, 10);
-//    displayWithScroll(b, 12);
+void loop() 
+{
     displayWithScroll(data, stringSize);
-
 }

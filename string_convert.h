@@ -5,11 +5,8 @@
 
 void convert_string_to_byte(String string, byte data[], char chars[], int & stringSize)
 {
-
-
-  
-    const int ROW_LENGTH = 7;
-    const int ASCII_OFFSET = 32;
+  // This lookup table is not my own; it was taken from:
+  // https://www.devacron.com/scrolling-text-with-arduino-uno-and-max7219-led-matrix/
   
   const byte CH[665] = {
     3, 8, B00000000, B00000000, B00000000, B00000000, B00000000, // space
@@ -109,56 +106,52 @@ void convert_string_to_byte(String string, byte data[], char chars[], int & stri
     4, 8, B00001000, B00000100, B00001000, B00000100, B00000000, // ~
   };
 
-  const int SPACING = 1;
+  const int ROW_LENGTH = 7;
+  const int ASCII_OFFSET = 32; // each "row" of the lookup table corresponds to an ASCII code with an offset of 32
+  const int SPACING = 1; // custom spacing; can be changed by the user 
+  const int DATA_OFFSET = 2; // the graphical data in each "row" of the lookup table is on the second index
 
-  int stringLength = string.length()+1;
+  int stringLength = string.length()+1; // "+1" is for the null terminator
   char tempChars[stringLength];
-
   string.toCharArray(tempChars, stringLength);
 
+  // copying the characters in array "tempChars" to array "chars"
   for (int c = 0; c < stringLength; c++)
   {
-    chars[c] = B00000000;
+    chars[c] = B00000000; // element is reset to empty byte in case it was modified before function call
     chars[c] = tempChars[c];
   }
-  
+
+  // resetting the pass by reference value in case it was modified before function call
   stringSize = 0;
-  
+
+  // iterating over each character in the string
   for (int charPos = 0; charPos < stringLength; charPos++)
   {
-    int characterPos = (chars[charPos]-ASCII_OFFSET)*ROW_LENGTH;
+    int characterPos = (chars[charPos]-ASCII_OFFSET)*ROW_LENGTH; // index of each "row" in the lookup table
 
+    // last value is always the null terminator, so characterPos is negative. Here it is replaced to be a space
     if (charPos == stringLength-1)
     {
       characterPos = 0;
     }
 
+    // the first elements of each row in the lookup table
     int charLength = CH[characterPos];
-    
+
+    // populating the "data" array with the display data from the lookup table
     for (int pos = 0; pos < charLength; pos++)
     {
-      data[stringSize] = CH[characterPos + pos + 2];
+      data[stringSize] = CH[characterPos + pos + DATA_OFFSET];
       stringSize++;
-
-
-      Serial.print(chars[charPos]);
-      Serial.print(": ");
-      Serial.print(characterPos + pos + 2);
-      Serial.print(": ");
-      Serial.print(data[pos], BIN);
-      Serial.print(": ");
-      Serial.print(stringSize);
-      Serial.print(": ");
-      Serial.print(charLength);
-      Serial.print("\n");
     }
 
+    // adding spacing between characters
     for (int space = 0; space < SPACING; space++)
     {
-      data[stringSize] = B00000000;
+      data[stringSize] = CH[DATA_OFFSET]; // CH[DATA_OFFSET] is an empty column
       stringSize++;
     }
-    
   }
 }
 
