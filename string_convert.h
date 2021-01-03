@@ -3,12 +3,15 @@
 
 #include <Arduino.h>
 
-void convert_letter_to_byte(char character, byte arr[5], int & charSize)
+void convert_string_to_byte(String string, byte data[], char chars[], int & stringSize)
 {
+
+
+  
     const int ROW_LENGTH = 7;
     const int ASCII_OFFSET = 32;
   
-  PROGMEM const unsigned char CH[] = {
+  const byte CH[665] = {
     3, 8, B00000000, B00000000, B00000000, B00000000, B00000000, // space
     1, 8, B01011111, B00000000, B00000000, B00000000, B00000000, // !
     3, 8, B00000011, B00000000, B00000011, B00000000, B00000000, // "
@@ -106,18 +109,57 @@ void convert_letter_to_byte(char character, byte arr[5], int & charSize)
     4, 8, B00001000, B00000100, B00001000, B00000100, B00000000, // ~
   };
 
-  int characterPos = (character-ASCII_OFFSET)*ROW_LENGTH;
+  const int SPACING = 1;
 
-  for (int pos = 2; pos < ROW_LENGTH; pos++)
+  int stringLength = string.length()+1;
+  char tempChars[stringLength];
+
+  string.toCharArray(tempChars, stringLength);
+
+  for (int c = 0; c < stringLength; c++)
   {
-    arr[pos] = CH[characterPos + pos];
-    //Serial.print(arr[pos], BIN);
-    //Serial.print("\n");
-    Serial.print("!!!");
+    chars[c] = B00000000;
+    chars[c] = tempChars[c];
   }
-
-  charSize = CH[character*ROW_LENGTH + 1];
   
+  stringSize = 0;
+  
+  for (int charPos = 0; charPos < stringLength; charPos++)
+  {
+    int characterPos = (chars[charPos]-ASCII_OFFSET)*ROW_LENGTH;
+
+    if (charPos == stringLength-1)
+    {
+      characterPos = 0;
+    }
+
+    int charLength = CH[characterPos];
+    
+    for (int pos = 0; pos < charLength; pos++)
+    {
+      data[stringSize] = CH[characterPos + pos + 2];
+      stringSize++;
+
+
+      Serial.print(chars[charPos]);
+      Serial.print(": ");
+      Serial.print(characterPos + pos + 2);
+      Serial.print(": ");
+      Serial.print(data[pos], BIN);
+      Serial.print(": ");
+      Serial.print(stringSize);
+      Serial.print(": ");
+      Serial.print(charLength);
+      Serial.print("\n");
+    }
+
+    for (int space = 0; space < SPACING; space++)
+    {
+      data[stringSize] = B00000000;
+      stringSize++;
+    }
+    
+  }
 }
 
 #endif

@@ -3,101 +3,116 @@
 
 #include "LedControl.h"
 #include "string_convert.h"
-#include "character.h"
-#include "text.h"
 
 LedControl lc=LedControl(12,10,11,1);
 
-/* we always wait a bit between updates of the display */
-unsigned long delaytime1=500;
-unsigned long delaytime2=50;
+unsigned long delaytime1 = 500;
+unsigned long delaytime2 = 50;
+unsigned long delaytime3 = 250;
 
-// display height and length 
+const int LIGHT_INTENSITY = 1;
+const int DISPLAY_WIDTH = 8;
 
+const int MAX_CHARS = 50;
+const int MAX_CHAR_LENGTH = 6;
+const int MAX_DISPLAY_LENGTH = MAX_CHARS*MAX_CHAR_LENGTH;
 
+byte b[12] = {B01111110,B10001000,B10001000,B10001000,B01111110,B00000000,B01111110,B10001000,B10001000,B10001000,B01111110,B00000000};
 
-
-Text myText;
-String hello;
+char chars[MAX_CHARS];
+byte data[MAX_DISPLAY_LENGTH];
+int stringSize = 0;
+String message = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 void setup() {
-  lc.shutdown(0,false);
-  lc.setIntensity(0,1);
-  lc.clearDisplay(0);
+  lc.shutdown(0,false); // wakeup call
+  lc.setIntensity(0,LIGHT_INTENSITY); // set light intensity
+  lc.clearDisplay(0); // clearing the display
   Serial.begin(9600);
-  myText = Text("Hello There! It Worked!");
-  hello = "Hello";
-}
 
-
-    
-
-void writeArduinoOnMatrix() {
-  /* here is the data for the characters */
-  byte a[5]={B01111110,B10001000,B10001000,B10001000,B01111110};
-  byte r[5]={B00010000,B00100000,B00100000,B00010000,B00111110};
-  byte d[5]={B11111110,B00010010,B00100010,B00100010,B00011100};
-  byte u[5]={B00111110,B00000100,B00000010,B00000010,B00111100};
-  byte i[5]={B00000000,B00000010,B10111110,B00100010,B00000000};
-  byte n[5]={B00011110,B00100000,B00100000,B00010000,B00111110};
-  byte o[5]={B00011100,B00100010,B00100010,B00100010,B00011100};
+  for (int displayCol = 0; displayCol < MAX_DISPLAY_LENGTH; displayCol++)
+  {
+    data[displayCol] = B00010000;
+  }
   
-  /* now display them one by one with a small delay */
-  lc.setRow(0,0,a[0]);
-  lc.setRow(0,1,a[1]);
-  lc.setRow(0,2,a[2]);
-  lc.setRow(0,3,a[3]);
-  lc.setRow(0,4,a[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,r[0]);
-  lc.setRow(0,1,r[1]);
-  lc.setRow(0,2,r[2]);
-  lc.setRow(0,3,r[3]);
-  lc.setRow(0,4,r[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,d[0]);
-  lc.setRow(0,1,d[1]);
-  lc.setRow(0,2,d[2]);
-  lc.setRow(0,3,d[3]);
-  lc.setRow(0,4,d[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,u[0]);
-  lc.setRow(0,1,u[1]);
-  lc.setRow(0,2,u[2]);
-  lc.setRow(0,3,u[3]);
-  lc.setRow(0,4,u[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,i[0]);
-  lc.setRow(0,1,i[1]);
-  lc.setRow(0,2,i[2]);
-  lc.setRow(0,3,i[3]);
-  lc.setRow(0,4,i[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,n[0]);
-  lc.setRow(0,1,n[1]);
-  lc.setRow(0,2,n[2]);
-  lc.setRow(0,3,n[3]);
-  lc.setRow(0,4,n[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,o[0]);
-  lc.setRow(0,1,o[1]);
-  lc.setRow(0,2,o[2]);
-  lc.setRow(0,3,o[3]);
-  lc.setRow(0,4,o[4]);
-  delay(delaytime1);
-  lc.setRow(0,0,0);
-  lc.setRow(0,1,0);
-  lc.setRow(0,2,0);
-  lc.setRow(0,3,0);
-  lc.setRow(0,4,0);
-  delay(delaytime1);
+  convert_string_to_byte(message, data, chars, stringSize);
+  Serial.print("\n");
+
+  for (int i = 0; i < 8; i++)
+  {
+    Serial.print(data[i], BIN);
+    Serial.print("\n");
+  }
 }
 
-void loop() { 
-  //writeArduinoOnMatrix();
-  //myText.displayScrollNoWrap();
-  //myText.print_row(0); 10111
-  //Serial.print(hello.charAt(0));
-  //Serial.print("\n");
-  myText.testDisplay();
+/* "Slider goes over array"
+ * - first iteration: print values from indices 0 to 7
+ * - second interation: print values from indices 1 to 8
+ * - etc
+ * - to wrap values, print from index n to the end of the array, then print the rest from the beginning such that a total of 8 values are printed
+ * - one value continuously goes from 0 to 7 for the display. the other values keeps going up to the array max
+ */
+
+void displayWithScroll(const byte displayData[], int arrSize)
+{
+
+//  int width = min(arrSize, DISPLAY_WIDTH);
+//  int whitespace = DISPLAY_WIDTH + (arrSize % DISPLAY_WIDTH);
+//  
+//  for (int displayCol = 0; displayCol < width; displayCol++)
+//  {
+//    lc.setRow(0, displayCol, displayData[displayCol]);
+////    Serial.print(displayData[displayCol]);
+////    Serial.print("\n");
+//  }
+//  delay(delaytime1);
+
+//  for (int shift = 0; shift < arrSize; shift++)
+//  {
+//    for (int displayCol = 0; displayCol < DISPLAY_WIDTH; displayCol++)
+//    {
+//      int letterIndex = displayCol + shift;
+//
+//      if (letterIndex > (arrSize - 1))
+//      {
+//        shift = 0;
+//        letterIndex = displayCol;
+//      }
+//      
+//      lc.setRow(0, displayCol, displayData[displayCol + shift]);
+//    }
+//    delay(delaytime1);  
+//  }
+
+  for (int shift = 0; shift < arrSize; shift++)
+  {
+    int colsDisplayed = 0;
+    for (int displayCol = 0; displayCol < DISPLAY_WIDTH && (displayCol+shift < arrSize); displayCol++)
+    {
+      lc.setRow(0, displayCol, displayData[displayCol + shift]);
+      colsDisplayed++;
+    }
+    int wrapCol = 0;
+    for (int displayCol = colsDisplayed; displayCol < DISPLAY_WIDTH; displayCol++)
+    {
+      lc.setRow(0, displayCol, displayData[wrapCol]);
+      wrapCol++;
+    }
+    delay(delaytime3);
+  }
+}
+
+void loop() {
+  byte a[10]={B01111110, B00010001, B00010001, B01111110, B00000000, B01111111, B01001001, B01001001, B00110110, B00000000};
+  
+//  lc.setRow(0,0,a[0]);
+//  lc.setRow(0,1,a[1]);
+//  lc.setRow(0,2,a[2]);
+//  lc.setRow(0,3,a[3]);
+//  lc.setRow(0,4,a[4]);
+//  delay(delaytime1);
+//    displayWithScroll(a, 10);
+//    displayWithScroll(b, 12);
+    displayWithScroll(data, stringSize);
+
 }
