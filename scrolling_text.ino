@@ -59,7 +59,7 @@ void displayWithScroll(const byte displayData[], int arrSize)
       lc.setRow(0, displayCol, displayData[wrapCol]);
       wrapCol++;
     }
-    delay(delaytime3); // custom delay, can be changed to increase/decrease scroll speed of text
+    delay(100); // custom delay, can be changed to increase/decrease scroll speed of text
   }
 }
 
